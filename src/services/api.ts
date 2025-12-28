@@ -1,14 +1,17 @@
+import { generateMultipleCards } from "../utils/luhn";
+
 export async function fetchCCData(bin: string): Promise<string[]> {
 	try {
-		const cleanBin = bin.substring(0, 6);
-		const res = await fetch(`https://drlabapis.onrender.com/api/ccgenerator?bin=${cleanBin}&count=10`);
-		if (!res.ok) throw new Error("API Error");
-		const text = await res.text();
-		// API returns newline separated cards
-		return text.trim().split("\n");
+		// We use the local Luhn algorithm generator instead of an external API.
+		// The 'bin' input here comes from extractBin(), which might be "456789xxxxxxxxxx".
+		// We pass it directly to the generator to respect the full pattern.
+		const cards = generateMultipleCards(bin, 16, 10);
+		
+		// Return strictly typed Promise
+		return Promise.resolve(cards);
 	} catch (e) {
-		console.error("CC Fetch Error:", e);
-		return ["error"];
+		console.error("CC Generation Error:", e);
+		return Promise.resolve(["error"]);
 	}
 }
 
