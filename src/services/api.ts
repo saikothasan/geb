@@ -1,13 +1,9 @@
 import { generateMultipleCards } from "../utils/luhn";
 
-export async function fetchCCData(bin: string): Promise<string[]> {
+export async function fetchCCData(bin: string, month?: string, year?: string): Promise<string[]> {
 	try {
-		// We use the local Luhn algorithm generator instead of an external API.
-		// The 'bin' input here comes from extractBin(), which might be "456789xxxxxxxxxx".
-		// We pass it directly to the generator to respect the full pattern.
-		const cards = generateMultipleCards(bin, 16, 10);
-		
-		// Return strictly typed Promise
+		// Use local Real Card Generator (Luhn + Date/CVV)
+		const cards = generateMultipleCards(bin, 10, month, year);
 		return Promise.resolve(cards);
 	} catch (e) {
 		console.error("CC Generation Error:", e);
@@ -17,7 +13,10 @@ export async function fetchCCData(bin: string): Promise<string[]> {
 
 export async function fetchBinInfo(bin: string): Promise<any> {
 	try {
-		const cleanBin = bin.substring(0, 6);
+		// API needs just the first 6 digits
+		const cleanBin = bin.replace(/[^0-9]/g, "").substring(0, 6);
+		if (cleanBin.length < 6) return {};
+		
 		const res = await fetch(`https://bins.antipublic.cc/bins/${cleanBin}`);
 		if (!res.ok) return {};
 		return await res.json();
