@@ -11,7 +11,7 @@ export async function onStart(c: BotContext) {
 		`━━━━━━━━━━━━━━━━━━\n` +
 		`💳 <b>CC Gen:</b> <code>/gen 456789</code>\n` +
 		`🔍 <b>BIN Look:</b> <code>/bin 456789</code>\n` +
-		`📍 <b>Fake Addr:</b> <code>/fake us</code>\n` +
+		`📍 <b>Fake Addr:</b> <code>/fake US</code>\n` +
 		`📋 <b>Countries:</b> <code>/support</code>\n`;
 
 	const keyboard = new InlineKeyboard()
@@ -22,7 +22,6 @@ export async function onStart(c: BotContext) {
 }
 
 export async function onSupport(c: BotContext) {
-	// Invert the COUNTRY_TO_LOCALE map to group keys or just list them clearly
 	// We will list the Country Codes defined in COUNTRY_TO_LOCALE
 	const entries = Object.entries(COUNTRY_TO_LOCALE).sort((a, b) => a[0].localeCompare(b[0]));
 	
