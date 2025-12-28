@@ -15,8 +15,8 @@ export async function onStart(c: BotContext) {
 		`📋 <b>Countries:</b> <code>/support</code>\n`;
 
 	const keyboard = new InlineKeyboard()
-		.url("👨‍💻 Developer", "https://t.me/ToxicGamer04")
-		.url("📢 Channel", "https://t.me/+xJFdpxht-voxNTJl");
+		.url("👨‍💻 Developer", "https://t.me/CyberCoderBD")
+		.url("📢 Channel", "https://t.me/drkingbd");
 
 	await c.reply(text, { parse_mode: "HTML", reply_markup: keyboard });
 }
