@@ -18,15 +18,17 @@ export async function onStyleCallback(c: BotContext) {
     if (!c.callbackQuery || !c.callbackQuery.data) return;
     
     // Format: style_page_<pageIndex>
-    const pageIndex = parseInt(c.callbackQuery.data.split("_")[2]);
+    const parts = c.callbackQuery.data.split("_");
+    const pageIndex = parseInt(parts[2]);
     
-    // Extract original text from the message header
+    // Attempt to recover text from the message header
     // Header format: "🎨 Styles for: "TEXT""
     const messageText = c.callbackQuery.message?.text || "";
-    const match = messageText.match(/^🎨 Styles for: "(.*)"/);
+    // Regex to match the text inside quotes after "Styles for: "
+    const match = messageText.match(/Styles for: "(.*)"/s); 
     
-    if (!match) {
-        await c.answerCallbackQuery({ text: "Error: Could not retrieve original text." });
+    if (!match || !match[1]) {
+        await c.answerCallbackQuery({ text: "❌ Session expired or text not found." });
         return;
     }
     
@@ -40,6 +42,10 @@ async function sendStylePage(c: BotContext, text: string, page: number, messageI
     const styleNames = Object.keys(STYLES);
     const totalPages = Math.ceil(styleNames.length / ITEMS_PER_PAGE);
     
+    // Bounds check
+    if (page < 0) page = 0;
+    if (page >= totalPages) page = totalPages - 1;
+
     // Slice styles for current page
     const start = page * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
@@ -50,29 +56,37 @@ async function sendStylePage(c: BotContext, text: string, page: number, messageI
     
     currentStyles.forEach(style => {
         response += `<b>${style}:</b>\n`;
-        response += `<code>${makeStylish(text, style)}</code>\n\n`;
+        // Escape HTML tags in the styled output to prevent breaking parse_mode
+        const styled = makeStylish(text, style)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        response += `<code>${styled}</code>\n\n`;
     });
 
     const keyboard = new InlineKeyboard();
     
-    // Add "Load More" (Next) button if not on last page
-    if (page < totalPages - 1) {
-        keyboard.text("⬇️ Load More", `style_page_${page + 1}`);
-    }
-    // Add "Back" button if not on first page
+    // Navigation Buttons
     if (page > 0) {
-        keyboard.text("⬆️ Back", `style_page_${page - 1}`);
+        keyboard.text("⬅️ Back", `style_page_${page - 1}`);
+    }
+    if (page < totalPages - 1) {
+        keyboard.text("Next ➡️", `style_page_${page + 1}`);
     }
 
-    if (messageIdToEdit) {
-        await c.api.editMessageText(c.chat!.id, messageIdToEdit, response, {
-            parse_mode: "HTML",
-            reply_markup: keyboard
-        });
-    } else {
-        await c.reply(response, {
-            parse_mode: "HTML",
-            reply_markup: keyboard
-        });
+    try {
+        if (messageIdToEdit) {
+            await c.api.editMessageText(c.chat!.id, messageIdToEdit, response, {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        } else {
+            await c.reply(response, {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+    } catch (e) {
+        // Ignore "Message is not modified" errors
     }
 }
