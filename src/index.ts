@@ -4,7 +4,7 @@ import { onStart, onSupport } from "./commands/start";
 import { onFake } from "./commands/fake";
 import { onBin } from "./commands/bin";
 import { onGen, onDotGen, onRegenCallback } from "./commands/gen";
-import { onStyle } from "./commands/style";
+import { onStyle, onStyleCallback } from "./commands/style";
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -24,6 +24,7 @@ export default {
 
 		// Callbacks
 		bot.callbackQuery(/^regen_/, onRegenCallback);
+		bot.callbackQuery(/^style_page_/, onStyleCallback);
 
 		// Webhook Handler
 		return webhookCallback(bot, "cloudflare-mod")(request);
