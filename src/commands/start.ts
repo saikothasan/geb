@@ -1,7 +1,7 @@
 import { BotContext } from "../types";
 import { InlineKeyboard } from "grammy";
 import { makeStylish } from "../utils/format";
-import { LOCALES } from "../data/locales";
+import { LOCALES, COUNTRY_TO_LOCALE } from "../data/locales";
 
 export async function onStart(c: BotContext) {
 	const name = c.from?.first_name || "User";
@@ -11,8 +11,8 @@ export async function onStart(c: BotContext) {
 		`━━━━━━━━━━━━━━━━━━\n` +
 		`💳 <b>CC Gen:</b> <code>/gen 456789</code>\n` +
 		`🔍 <b>BIN Look:</b> <code>/bin 456789</code>\n` +
-		`📍 <b>Fake Addr:</b> <code>/fake en_US</code>\n` +
-		`📋 <b>Locales:</b> <code>/support</code>\n`;
+		`📍 <b>Fake Addr:</b> <code>/fake us</code>\n` +
+		`📋 <b>Countries:</b> <code>/support</code>\n`;
 
 	const keyboard = new InlineKeyboard()
 		.url("👨‍💻 Developer", "https://t.me/ToxicGamer04")
@@ -22,13 +22,18 @@ export async function onStart(c: BotContext) {
 }
 
 export async function onSupport(c: BotContext) {
-	const keys = Object.keys(LOCALES);
-	let text = `🌍 <b>Supported Locales</b>\n\n`;
+	// Invert the COUNTRY_TO_LOCALE map to group keys or just list them clearly
+	// We will list the Country Codes defined in COUNTRY_TO_LOCALE
+	const entries = Object.entries(COUNTRY_TO_LOCALE).sort((a, b) => a[0].localeCompare(b[0]));
+	
+	let text = `🌍 <b>Supported Countries</b>\n\n`;
 	
 	// Chunking to avoid Telegram message length limits
 	let chunk = "";
-	for (const key of keys) {
-		const entry = `<code>${key}</code>: ${LOCALES[key].name}\n`;
+	for (const [code, localeKey] of entries) {
+		const localeName = LOCALES[localeKey]?.name || localeKey;
+		const entry = `<code>${code}</code> : ${localeName}\n`;
+		
 		if (chunk.length + entry.length > 3800) {
 			await c.reply(text + chunk, { parse_mode: "HTML" });
 			text = "";
