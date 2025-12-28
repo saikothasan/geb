@@ -1,15 +1,78 @@
 import { BotContext } from "../types";
-import { makeStylish } from "../utils/format";
+import { STYLES, makeStylish } from "../utils/format";
+import { InlineKeyboard } from "grammy";
+
+const ITEMS_PER_PAGE = 10;
 
 export async function onStyle(c: BotContext) {
-	const args = c.match as string;
-	
-	if (!args || !args.trim()) {
-		return c.reply("Usage: <code>/style Hello World</code>", { parse_mode: "HTML" });
-	}
+    const args = c.match as string;
+    
+    if (!args || !args.trim()) {
+        return c.reply("Usage: <code>/style Hello World</code>", { parse_mode: "HTML" });
+    }
 
-	const styled = makeStylish(args);
-	
-	// Return inside a code block for easy copying
-	await c.reply(`<code>${styled}</code>`, { parse_mode: "HTML" });
+    await sendStylePage(c, args.trim(), 0);
+}
+
+export async function onStyleCallback(c: BotContext) {
+    if (!c.callbackQuery || !c.callbackQuery.data) return;
+    
+    // Format: style_page_<pageIndex>
+    const pageIndex = parseInt(c.callbackQuery.data.split("_")[2]);
+    
+    // Extract original text from the message header
+    // Header format: "🎨 Styles for: "TEXT""
+    const messageText = c.callbackQuery.message?.text || "";
+    const match = messageText.match(/^🎨 Styles for: "(.*)"/);
+    
+    if (!match) {
+        await c.answerCallbackQuery({ text: "Error: Could not retrieve original text." });
+        return;
+    }
+    
+    const originalText = match[1];
+    
+    await c.answerCallbackQuery();
+    await sendStylePage(c, originalText, pageIndex, c.callbackQuery.message?.message_id);
+}
+
+async function sendStylePage(c: BotContext, text: string, page: number, messageIdToEdit?: number) {
+    const styleNames = Object.keys(STYLES);
+    const totalPages = Math.ceil(styleNames.length / ITEMS_PER_PAGE);
+    
+    // Slice styles for current page
+    const start = page * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const currentStyles = styleNames.slice(start, end);
+    
+    let response = `🎨 Styles for: "${text}"\n`;
+    response += `📄 <b>Page ${page + 1}/${totalPages}</b>\n\n`;
+    
+    currentStyles.forEach(style => {
+        response += `<b>${style}:</b>\n`;
+        response += `<code>${makeStylish(text, style)}</code>\n\n`;
+    });
+
+    const keyboard = new InlineKeyboard();
+    
+    // Add "Load More" (Next) button if not on last page
+    if (page < totalPages - 1) {
+        keyboard.text("⬇️ Load More", `style_page_${page + 1}`);
+    }
+    // Add "Back" button if not on first page
+    if (page > 0) {
+        keyboard.text("⬆️ Back", `style_page_${page - 1}`);
+    }
+
+    if (messageIdToEdit) {
+        await c.api.editMessageText(c.chat!.id, messageIdToEdit, response, {
+            parse_mode: "HTML",
+            reply_markup: keyboard
+        });
+    } else {
+        await c.reply(response, {
+            parse_mode: "HTML",
+            reply_markup: keyboard
+        });
+    }
 }
