@@ -3,7 +3,7 @@ import { Env } from "./types";
 import { onStart, onSupport } from "./commands/start";
 import { onFake } from "./commands/fake";
 import { onBin } from "./commands/bin";
-import { onGen, onRegenCallback } from "./commands/gen";
+import { onGen, onDotGen, onRegenCallback } from "./commands/gen";
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -14,7 +14,11 @@ export default {
 		bot.command("support", onSupport);
 		bot.command("fake", onFake);
 		bot.command("bin", onBin);
+		
+		// GEN: Handle /gen
 		bot.command("gen", onGen);
+		// GEN: Handle .gen (Regex matches ".gen" followed by space and args)
+		bot.hears(/^\.gen\s+(.+)$/, onDotGen);
 
 		// Callbacks
 		bot.callbackQuery(/^regen_/, onRegenCallback);
