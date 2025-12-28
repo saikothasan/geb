@@ -5,7 +5,7 @@
  */
 function getCheckDigit(payload: string): number {
 	let sum = 0;
-	let shouldDouble = true; // We process from right to left, starting with the digit immediately left of the check digit
+	let shouldDouble = true; // Process from right to left
 
 	// Loop backwards through the payload
 	for (let i = payload.length - 1; i >= 0; i--) {
@@ -24,25 +24,26 @@ function getCheckDigit(payload: string): number {
 }
 
 /**
- * Generates a valid Credit Card number using the Luhn algorithm based on a pattern.
- * Validates against the input pattern:
- * - Digits are preserved.
- * - Non-digits (like 'x') are replaced with random digits.
- * - The final digit is always recalculated as the Luhn check digit.
- * * @param pattern - The BIN or pattern (e.g. "456789xxxxxxxxxx")
- * @param length - Total length of the card (default 16)
+ * Generates a valid Luhn number based on a pattern.
  */
 export function generateLuhnCard(pattern: string, length: number = 16): string {
+    // 1. Clean pattern: allow digits and 'x'
+    let cleanPattern = pattern.replace(/[^0-9x]/gi, "");
+    
+    // 2. Pad with 'x' if short
+    if (cleanPattern.length < length) {
+        cleanPattern = cleanPattern.padEnd(length, 'x');
+    }
+    
 	let payload = "";
-
 	// Build the payload (digits 0 to length-2)
 	for (let i = 0; i < length - 1; i++) {
-		const char = pattern[i];
+		const char = cleanPattern[i];
 		if (char && /[0-9]/.test(char)) {
 			// Keep existing digit
 			payload += char;
 		} else {
-			// Generate random digit for 'x' or missing chars
+			// Generate random digit for 'x'
 			payload += Math.floor(Math.random() * 10).toString();
 		}
 	}
@@ -52,13 +53,60 @@ export function generateLuhnCard(pattern: string, length: number = 16): string {
 	return payload + checkDigit;
 }
 
+export interface CardDetails {
+    number: string;
+    month: string;
+    year: string;
+    cvv: string;
+}
+
 /**
- * Generates multiple unique valid cards.
+ * Generates full card details: Number, Month, Year, CVV.
  */
-export function generateMultipleCards(pattern: string, count: number = 10): string[] {
+export function generateCardDetails(pattern: string, reqMonth?: string, reqYear?: string): CardDetails {
+    // 1. Generate Number
+    const number = generateLuhnCard(pattern);
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // 2. Year Logic
+    let year = reqYear;
+    if (!year) {
+        // Random year: Current to +5 years
+        year = (currentYear + Math.floor(Math.random() * 5) + 1).toString();
+    }
+    // Normalize "28" -> "2028"
+    if (year.length === 2) {
+        year = "20" + year;
+    }
+    
+    // 3. Month Logic
+    let month = reqMonth;
+    if (!month) {
+        month = (Math.floor(Math.random() * 12) + 1).toString().padStart(2, '0');
+    } else {
+        month = month.padStart(2, '0');
+    }
+    
+    // 4. CVV Logic
+    // Amex (starts with 34 or 37) uses 4 digits, others 3
+    const isAmex = /^3[47]/.test(number);
+    const cvvLen = isAmex ? 4 : 3;
+    let cvv = "";
+    for(let i=0; i<cvvLen; i++) cvv += Math.floor(Math.random() * 10);
+
+    return { number, month, year, cvv };
+}
+
+/**
+ * Generates multiple cards in format: CC|MM|YYYY|CVV
+ */
+export function generateMultipleCards(pattern: string, count: number = 10, month?: string, year?: string): string[] {
 	const cards: string[] = [];
 	for (let i = 0; i < count; i++) {
-		cards.push(generateLuhnCard(pattern));
+        const d = generateCardDetails(pattern, month, year);
+		cards.push(`${d.number}|${d.month}|${d.year}|${d.cvv}`);
 	}
 	return cards;
 }
