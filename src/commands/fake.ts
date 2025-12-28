@@ -6,7 +6,7 @@ export async function onFake(c: BotContext) {
 	// Default to 'US' if no argument
 	const inputCode = args ? args.toUpperCase() : "US";
 
-	// 1. Try to find by Country Code (e.g., "BD")
+	// 1. Try to find by Country Code (e.g., "BD" -> "bn_BD")
 	let localeKey = COUNTRY_TO_LOCALE[inputCode];
 
 	// 2. Fallback: Check if user provided a full locale code directly (e.g., "bn_BD")
@@ -23,6 +23,8 @@ export async function onFake(c: BotContext) {
 	const currentFaker = currentLocData.faker;
 	
 	// Generate Data using strictly typed Faker methods
+	// Using "any" cast on sexType() temporarily if version mismatch occurs, 
+	// but standard faker API usually returns "female" | "male"
 	const sex = currentFaker.person.sexType();
 	const firstName = currentFaker.person.firstName(sex);
 	const lastName = currentFaker.person.lastName();
@@ -33,7 +35,16 @@ export async function onFake(c: BotContext) {
 	const state = currentFaker.location.state();
 	const zip = currentFaker.location.zipCode();
 	const country = currentFaker.location.country();
-	const dob = currentFaker.date.birthdate({ min: 18, max: 65, mode: 'age' }).toISOString().split('T')[0];
+	
+	// Handle Birthdate safely
+	let dob = "N/A";
+	try {
+		dob = currentFaker.date.birthdate({ min: 18, max: 65, mode: 'age' }).toISOString().split('T')[0];
+	} catch (e) {
+		// Fallback for some locales that might miss date definitions
+		dob = "1990-01-01"; 
+	}
+	
 	const username = currentFaker.internet.username({ firstName, lastName });
 
 	const text = 
