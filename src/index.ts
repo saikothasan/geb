@@ -4,6 +4,7 @@ import { onStart, onSupport } from "./commands/start";
 import { onFake } from "./commands/fake";
 import { onBin } from "./commands/bin";
 import { onGen, onDotGen, onRegenCallback } from "./commands/gen";
+import { onStyle } from "./commands/style";
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -14,6 +15,7 @@ export default {
 		bot.command("support", onSupport);
 		bot.command("fake", onFake);
 		bot.command("bin", onBin);
+		bot.command("style", onStyle);
 		
 		// GEN: Handle /gen
 		bot.command("gen", onGen);
