@@ -12,6 +12,7 @@ import {
 	fakerZH_TW, fakerZU_ZA
 } from "@faker-js/faker";
 
+// 1. Base Locales Map (Technical Keys)
 export const LOCALES: Record<string, { name: string; faker: Faker }> = {
 	"af_ZA": { name: "Afrikaans (South Africa)", faker: fakerAF_ZA },
 	"ar": { name: "Arabic", faker: fakerAR },
@@ -88,18 +89,19 @@ export const LOCALES: Record<string, { name: string; faker: Faker }> = {
 	"zu_ZA": { name: "Zulu (South Africa)", faker: fakerZU_ZA }
 };
 
-// Map short country codes to the most appropriate Locale key
+// 2. User-Friendly Country Code Map
+// Maps ISO 2-letter codes -> Best matching Locale Key
 export const COUNTRY_TO_LOCALE: Record<string, string> = {
 	"ZA": "af_ZA", // South Africa
 	"AE": "ar",    // UAE (using generic Arabic)
-	"SA": "ar",    // Saudi Arabia (using generic Arabic)
+	"SA": "ar",    // Saudi Arabia
 	"AZ": "az",    // Azerbaijan
 	"BD": "bn_BD", // Bangladesh
 	"CZ": "cs_CZ", // Czechia
 	"DK": "da",    // Denmark
 	"DE": "de",    // Germany
 	"AT": "de_AT", // Austria
-	"CH": "de_CH", // Switzerland (Defaulting to German)
+	"CH": "de_CH", // Switzerland
 	"GR": "el",    // Greece
 	"US": "en_US", // United States
 	"AU": "en_AU", // Australia
