@@ -1,16 +1,26 @@
 import { BotContext } from "../types";
-import { LOCALES } from "../data/locales";
+import { LOCALES, COUNTRY_TO_LOCALE } from "../data/locales";
 
 export async function onFake(c: BotContext) {
 	const args = (c.match as string).trim();
-	// Default to 'en_US' if no argument
-	const localeKey = args ? args : "en_US"; 
+	// Default to 'US' if no argument
+	const inputCode = args ? args.toUpperCase() : "US";
 
-	if (!LOCALES[localeKey]) {
-		return c.reply("❌ Invalid Locale! Usage: <code>/fake en_US</code>\nCheck /support for list.", { parse_mode: "HTML" });
+	// 1. Try to find by Country Code (e.g., "BD")
+	let localeKey = COUNTRY_TO_LOCALE[inputCode];
+
+	// 2. Fallback: Check if user provided a full locale code directly (e.g., "bn_BD")
+	//    This preserves backward compatibility and allows accessing specific locales (like en_AU_ocker)
+	if (!localeKey && LOCALES[args]) {
+		localeKey = args;
 	}
 
-	const currentFaker = LOCALES[localeKey].faker;
+	if (!localeKey || !LOCALES[localeKey]) {
+		return c.reply("❌ Invalid Country Code! Usage: <code>/fake BD</code>\nCheck /support for list.", { parse_mode: "HTML" });
+	}
+
+	const currentLocData = LOCALES[localeKey];
+	const currentFaker = currentLocData.faker;
 	
 	// Generate Data using strictly typed Faker methods
 	const sex = currentFaker.person.sexType();
@@ -27,7 +37,7 @@ export async function onFake(c: BotContext) {
 	const username = currentFaker.internet.username({ firstName, lastName });
 
 	const text = 
-		`📍 𝙁𝘼𝙆𝙀 𝘼𝘿𝘿𝙍𝙀𝙎𝙎 (${LOCALES[localeKey].name})\n\n` +
+		`📍 𝙁𝘼𝙆𝙀 𝘼𝘿𝘿𝙍𝙀𝙎𝙎 (${currentLocData.name})\n\n` +
 		`• 𝙉𝙖𝙢𝙚: ${firstName} ${lastName}\n` +
 		`• 𝙂𝙚𝙣𝙙𝙚𝙧: ${sex.toUpperCase()}\n` +
 		`• 𝙀𝙢𝙖𝙞𝙡: ${email}\n` +
