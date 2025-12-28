@@ -10,23 +10,25 @@ export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const bot = new Bot(env.BOT_TOKEN);
 
-		// Command Registration
+		// --- 1. Commands ---
 		bot.command("start", onStart);
 		bot.command("support", onSupport);
 		bot.command("fake", onFake);
 		bot.command("bin", onBin);
 		bot.command("style", onStyle);
+		bot.command("gen", onGen); // Handles /gen
 		
-		// GEN: Handle /gen
-		bot.command("gen", onGen);
-		// GEN: Handle .gen (Regex matches ".gen" followed by space and args)
+		// --- 2. Hears (Regex) ---
+		// Matches ".gen 555555" etc.
 		bot.hears(/^\.gen\s+(.+)$/, onDotGen);
 
-		// Callbacks
+		// --- 3. Callbacks ---
+		// Re-generate cards
 		bot.callbackQuery(/^regen_/, onRegenCallback);
+		// Stylish text pagination
 		bot.callbackQuery(/^style_page_/, onStyleCallback);
 
-		// Webhook Handler
+		// --- 4. Webhook ---
 		return webhookCallback(bot, "cloudflare-mod")(request);
 	},
 };
